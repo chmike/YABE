@@ -1,11 +1,6 @@
 YABE 
 ====
 
-![img](http://daringfireball.net/graphics/logos/)
-
-![img](https://dl.dropbox.com/s/fw3e3dr65behehn/web.png)
-
-
 YABE is **Y**et **A**nother **B**inary **E**ncoding proposal as simple as JSON, but with the addition of a binary blob data value (i.e. Images) and the benefit of marshalling binary data.
 
 Atomic data values :
