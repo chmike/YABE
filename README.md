@@ -20,7 +20,7 @@ Composed values :
 Value Encoding 
 --------------
 
-Each value is encoded as a tag byte identifying its type, followed by an optional and the value size value if it couldn't be stored in the tag : 
+Each value is encoded as a tag byte identifying its type, followed by an optional value size if it is not implicit or stored in the tag, and the value itself if it couldn't be stored in the tag : 
 
     [tag]([size])([value]) 
 
