@@ -36,22 +36,22 @@ Each value is encoded as a tag byte identifying its type, followed by an optiona
 Table of Tags
 -------------
 
-	#tags |   Value type     |    Tag    | value or arguments        | comment
+    #tags |   Value type     |    Tag    | arguments                 | comment
 	-------------------------------------------------------------------------------------------
-    128    integers values   : [0xxxxxxx] 0..127                     : integer value encoded in tag
-	 32    negative integers : [111xxxxx] -1..-32                    : integer value encoded in tag
-     64    short strings     : [10xxxxxx] [utf8 bytes]*              : 0 to 63 byte long string
+    128    small integers >0 : [0xxxxxxx]                            : 0..127 value encoded as is in tag
+     32    small integers <0 : [111xxxxx]                            : -1..-32 value encoded as is in tag
+     64    short strings     : [10xxxxxx] [utf8 bytes]*              : 0 to 63 byte long utf8 string
      32    ...               : [110xxxxx]                            : 32 tag values listed beneath
         1    ignore          : [11000000]                            : tag byte to be ignored
         1    extend          : [11000001] (reserved)                 : tag extension space
-        1    boolean         : [11000010] false                      : boolean false value
-        1    boolean         : [11000011] true                       : boolean true value
+        1    boolean         : [11000010]                            : false value
+        1    boolean         : [11000011]                            : true value
         1    null            : [11000100]                            : null value 
         1    integer         : [11000101] [2 byte]                   : 16 bit integer
         1    integer         : [11000110] [4 byte]                   : 32 bit integer
         1    integer         : [11000111] [8 byte]                   : 64 bit integer
-        1    floating point  : [11001000] 0.                         : zero float value
-        1    floating point  : [11001001] [2 byte]                   : 32 bit float
+        1    floating point  : [11001000]                            : 0. value
+        1    floating point  : [11001001] [2 byte]                   : 16 bit float
         1    floating point  : [11001010] [4 byte]                   : 32 bit float
         1    floating point  : [11001011] [8 byte]                   : 64 bit float
         1    len16 string    : [11001100] [2 byte] [utf8 bytes]*     : string of utf8 chars
@@ -60,7 +60,7 @@ Table of Tags
         1    len32 blob      : [11001111] [string] [4 byte] [bytes]* : mime typed byte array
         7    array           : [11010xxx] [value]*                   : 0 to 6 value array
         1    array start     : [11010111] [value]*                   : equivalent to [
-        6    object          : [11011xxx] [string,value]*            : 0 to 5 pairs of identifier and value
+        6    object          : [11011xxx] [string, value]*           : 0 to 5 pairs of identifier and value
         1    end             : [11011110]                            : equivalent to ] or }
         1    object start    : [11011111] [string, value]*           : equivalent to {
 
