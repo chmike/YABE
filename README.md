@@ -43,14 +43,14 @@ Table of Tags
      64    short strings     : [10xxxxxx] [utf8 bytes]*              : 0 to 63 byte long utf8 string
      32    ...               : [110xxxxx]                            : 32 tag values listed beneath
         1    ignore          : [11000000]                            : tag byte to be ignored
-        1    extend          : [11000001] (reserved)                 : tag extension space
+        1    null            : [11000001]                            : null value 
         1    boolean         : [11000010]                            : false value
         1    boolean         : [11000011]                            : true value
-        1    null            : [11000100]                            : null value 
+        1    end             : [11000100]                            : equivalent to ] or }
         1    integer         : [11000101] [2 byte]                   : 16 bit integer
         1    integer         : [11000110] [4 byte]                   : 32 bit integer
         1    integer         : [11000111] [8 byte]                   : 64 bit integer
-        1    floating point  : [11001000]                            : 0. value
+        1    floating point  : [11001000]                            : 0. float value
         1    floating point  : [11001001] [2 byte]                   : 16 bit float
         1    floating point  : [11001010] [4 byte]                   : 32 bit float
         1    floating point  : [11001011] [8 byte]                   : 64 bit float
@@ -60,18 +60,17 @@ Table of Tags
         1    len32 blob      : [11001111] [string] [4 byte] [bytes]* : mime typed byte array
         7    array           : [11010xxx] [value]*                   : 0 to 6 value array
         1    array start     : [11010111] [value]*                   : equivalent to [
-        6    object          : [11011xxx] [string, value]*           : 0 to 5 pairs of identifier and value
-        1    end             : [11011110]                            : equivalent to ] or }
+        7    object          : [11011xxx] [string, value]*           : 0 to 6 pairs of identifier and value
         1    object start    : [11011111] [string, value]*           : equivalent to {
 
 
 YABE data Signature
 -------------------
 
-Saved or transmitted YABE encoded data starts with a five byte signature. The first four bytes are the ASCII code 'Y', 'A', 'B', 'E' in that order, and the fifth byte is the version number 0 for of the encoding which is currently 0. The encoded data byte length is defined by the context. 
+Saved or transmitted YABE encoded data starts with a five byte signature. The first four bytes are the ASCII code 'Y', 'A', 'B', 'E' in that order, and the fifth byte is the version number of the encoding which is currently 0. The encoded data byte length is defined by the context (i.e. file or record size).
 
 File extension and mime type
 ----------------------------
 
-A file name with extention .yabe and starting with the ABE tag contains YABE encoded data. The mime type is "application/yabe" (to be registered).
+A file name with extention .yabe and starting with the YABE tag contains YABE encoded data. The mime type is "application/yabe" (to be registered).
 
