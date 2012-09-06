@@ -20,14 +20,14 @@ Composed values :
 Value Encoding 
 --------------
 
-Each value is encoded as a tag byte identifying its type, followed by an optional value size if it is not implicit or stored in the tag, and the value itself if it couldn't be stored in the tag : 
+Each value is encoded as a tag byte identifying its type, followed by an optional value size and the value itself. When possible the size or the value are stored in the tag. 
 
     [tag]([size])([value]) 
 
-* The tag is a one byte value but may later be extended to a multibyte value if required ;
+* The tag is a one byte value ;
 * The value size, when present, is encoded as a 16 bit or 32bit little endian unsigned integer ;
 * The value has a type specific encoding using always the most compact form :
-    * All multi byte integers are encoded in little endian order ;
+    * All multi byte integers are encoded in little endian order (x86 native representation);
     * Floating point values are encoded in the IEEE 754-2008 format ;
 * An Array or Object is a stream of values ; 
 * A string is a byte array of utf8 encoded characters ;
