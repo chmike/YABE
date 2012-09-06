@@ -38,8 +38,8 @@ Table of Tags
 
     #tags |   Value type     |    Tag    | arguments                 | comment
 	-------------------------------------------------------------------------------------------
-    128    small integers >0 : [0xxxxxxx]                            : 0..127 value encoded as is in tag
-     32    small integers <0 : [111xxxxx]                            : -1..-32 value encoded as is in tag
+    128    integers 0..127   : [0xxxxxxx]                            : 0..127 value encoded as is in tag
+     32    integers -1..32   : [111xxxxx]                            : -1..-32 value encoded as is in tag
      64    short strings     : [10xxxxxx] [utf8 bytes]*              : 0 to 63 byte long utf8 string
      32    ...               : [110xxxxx]                            : 32 tag values listed beneath
         1    ignore          : [11000000]                            : tag byte to be ignored
