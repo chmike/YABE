@@ -46,7 +46,7 @@ Table of Tags
         1    null            : [11000001]                            : null value 
         1    boolean         : [11000010]                            : false value
         1    boolean         : [11000011]                            : true value
-        1    end             : [11000100]                            : equivalent to ] or }
+        1    stream end      : [11000100]                            : equivalent to ] or }
         1    integer         : [11000101] [2 byte]                   : 16 bit integer
         1    integer         : [11000110] [4 byte]                   : 32 bit integer
         1    integer         : [11000111] [8 byte]                   : 64 bit integer
@@ -59,9 +59,9 @@ Table of Tags
         1    len16 blob      : [11001110] [string] [2 byte] [bytes]* : mime typed byte array
         1    len32 blob      : [11001111] [string] [4 byte] [bytes]* : mime typed byte array
         7    array           : [11010xxx] [value]*                   : 0 to 6 value array
-        1    array start     : [11010111] [value]*                   : equivalent to [
+        1    array stream    : [11010111] [value]*                   : equivalent to [
         7    object          : [11011xxx] [string, value]*           : 0 to 6 pairs of identifier and value
-        1    object start    : [11011111] [string, value]*           : equivalent to {
+        1    object stream   : [11011111] [string, value]*           : equivalent to {
 
 
 YABE data Signature
