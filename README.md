@@ -56,8 +56,8 @@ Table of Tags
         1    floating point  : [11001011] [8 byte]                   : 64 bit float
         1    len16 string    : [11001100] [2 byte] [utf8 bytes]*     : string of utf8 chars
         1    len32 string    : [11001101] [4 byte] [utf8 bytes]*     : string of utf8 chars
-        1    len16 blob      : [11001110] [string] [2 byte] [bytes]* : mime typed byte array
-        1    len32 blob      : [11001111] [string] [4 byte] [bytes]* : mime typed byte array
+        1    len16 blob      : [11001110] [2 byte] [string] [bytes]* : mime typed byte array
+        1    len32 blob      : [11001111] [4 byte] [string] [bytes]* : mime typed byte array
         7    array           : [11010xxx] [value]*                   : 0 to 6 value array
         1    array stream    : [11010111] [value]*                   : equivalent to [
         7    object          : [11011xxx] [string, value]*           : 0 to 6 pairs of identifier and value
