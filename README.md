@@ -32,15 +32,15 @@ Each value is encoded as a tag byte identifying its type, followed by an optiona
     * All multi byte integers are encoded in little endian order (x86 native representation);
     * Floating point values are encoded in the IEEE 754-2008 format ;
 * A string is a byte array of utf8 encoded characters ;
-* A blob is an array of raw bytes with a string specifiying its mime type if not empty ;
+* A blob is an array of raw bytes with a string specifiying its mime type when not empty ;
 * An Array is encoded as a stream of values ; 
 * An Object is encoded as a stream of string and value pairs ; 
 
 ## Table of Tags and encoding
 
     #tags |   Value type     |    Tag    | arguments                 | comment
-	-------------------------------------------------------------------------------------------
-    128    integers 0..127   : [0xxxxxxx]                            : 0..127 value encoded as is in tag
+    -------------------------------------------------------------------------------------------------------
+    128    integers 0..127   : [0xxxxxxx]                            : 0..127 integer value encoded as is
      64    short strings     : [10xxxxxx] [utf8 bytes]*              : 0 to 63 byte long utf8 string
      32                      : [110xxxxx]                            : 32 tag values listed below
          1   null            : [11000000]                            : null value 
@@ -63,16 +63,16 @@ Each value is encoded as a tag byte identifying its type, followed by an optiona
          1   array stream    : [11010111] [value]*                   : equivalent to [
          7   object          : [11011xxx] [string, value]*           : 0 to 6 pairs of identifier and value
          1   object stream   : [11011111] [string, value]*           : equivalent to {
-     32    integers -1..-32  : [111xxxxx]                            : -1..-32 value encoded as is in tag
+     32    integers -1..-32  : [111xxxxx]                            : -1..-32 integer value encoded as is
 
 
 ## YABE data size
 
-The encoded data byte length is defined by the context (i.e. file or record size) or implicit if the data is limited to one value which includes an array of value or an object.
+The encoded data byte length is defined by the context (i.e. file or record size) or is implicit if the data is limited to one value like an array or an object.
 
 ## YABE data Signature
 
-Saved or transmitted YABE encoded data starts with a five byte signature. The first four bytes are the ASCII code 'Y', 'A', 'B', 'E' in that order, and the fifth byte is the version number of the encoding which is currently 0. 
+Stored or transmitted YABE encoded data starts with a five byte signature. The first four bytes are the ASCII code 'Y', 'A', 'B', 'E' in that order, and the fifth byte is the version number of the encoding. This specification describes the encoding version 0. 
 
 ## File extension and mime type
 
