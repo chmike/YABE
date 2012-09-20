@@ -63,8 +63,8 @@ Each value is encoded as a tag byte identifying its type, followed by an optiona
 * An Array is encoded as a stream of values ;
 * An Object is encoded as a stream of string and value pairs where the string is a unique identifier ;
 * An Object may not have an empty string as identifier ;
-* A array of object stream is ended by the *ends* tag ;
-* If an array or an object have lest than 7 items, the *arrayn* or *objectn* encoding may be used where the number of items is encoded in the tag ;
+* An array or an object stream is ended by the *ends* tag ;
+* If an array or an object have lest than 7 items, the *arrayn* or *objectn* encoding should be used where the number of items is encoded in the tag ;
 
 ### YABE data Signature
 
