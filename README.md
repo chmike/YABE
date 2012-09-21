@@ -39,8 +39,8 @@ Each value is encoded as a tag byte identifying its type, followed by an optiona
       flt16  : [11000101] [flt16]           : 16 bit float
       flt32  : [11000110] [flt32]           : 32 bit float
       flt64  : [11000111] [flt64]           : 64 bit float
-      true   : [11001000]                   : boolean true value
-      false  : [11001001]                   : boolean false value
+      false  : [11001000]                   : boolean false value
+      true   : [11001001]                   : boolean true value
       blob   : [11001010] [string] [string] : mime typed byte array
       ends   : [11001011]                   : equivalent to ] or }
       none   : [11001100]                   : tag byte to be ignored
