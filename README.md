@@ -56,10 +56,10 @@ Each value is encoded as a tag byte identifying its type, followed by an optiona
 * The tag is a one byte value ;
 * Integer values from -32 to 127 are encoded as is as the tag value ;
 * Integer values are encoded as little endian signed integer ; 
-* Floating point values are encoded in the IEEE 754-2008 format ;
+* Floating point values are little endian encoded in the IEEE 754-2008 format ;
 * A strings is a sequence of utf8 encoded chars with the number of bytes as length ;
 * A length value are encoded as little endian unsigned integer of 16, 32 or 64 bits ;
-* A blob is a pair of strings, the first is a mime type and the second is a sequence of raw bytes ;
+* A blob is a pair of strings, the first contains the mime type of the raw data bytes encoded in the second string ;
 * An Array is encoded as a stream of values ;
 * An Object is encoded as a stream of string and value pairs where the string is a unique identifier ;
 * An Object may not have an empty string as identifier ;
