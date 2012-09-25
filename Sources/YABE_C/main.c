@@ -2,28 +2,11 @@
 #include <stdlib.h>
 
 #include "yabe.h"
-#include "PrintHex.h"
 
-
-/* Byte order swaping: 1234578 -> 87654321 */
-inline uint64_t byte_swap_uint64( uint64_t val )
-{
-    val = ((val << 8) & 0xFF00FF00FF00FF00ULL ) | ((val >> 8) & 0x00FF00FF00FF00FFULL );
-    val = ((val << 16) & 0xFFFF0000FFFF0000ULL ) | ((val >> 16) & 0x0000FFFF0000FFFFULL );
-    return (val << 32) | (val >> 32);
-}
-
+/* Sequence of some rough and minimal encoding and decoding test. */
 
 int main(void)
 {
-
-    /*
-    uint64_t val1 = 0x1122334455667788ULL;
-    uint64_t val2 = byte_swap_uint64( val1 );
-
-    printf( "%16.016llX -> %16.016llX\n", (unsigned long long)val1, (unsigned long long)val2 );
-    exit(0);
-    */
     // Buffer
     const size_t bufLen = 1024*1024;
     char buffer[bufLen];
@@ -209,7 +192,6 @@ int main(void)
     rCur.len += res = yabe_write_string( &wCur, wStrLen );
     if( res )
         rCur.len += yabe_write_data( &wCur, wString, wStrLen );
-    // printHex( rCur.ptr, rCur.len, 0 );
     res = yabe_read_string( &rCur, &rStrLen );
     if( !res || !strcmp( wString, rString ) )
     {
