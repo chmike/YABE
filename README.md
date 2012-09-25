@@ -3,7 +3,7 @@
 YABE is **Y**et **A**nother **B**inary **E**ncoding proposal as simple as JSON, but with the addition of a binary blob data value (i.e. Images) and the benefit of marshalling binary data.
 
 **Author**: Christophe Meessen  
-**Date** : 19 sep 2012  
+**Date** : 25 sep 2012  
 
 ### Value types
 
