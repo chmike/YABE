@@ -259,7 +259,7 @@ typedef char yabe_tag_t;
  * @param tag Tag value to write at cursor position
  * @return the number of bytes written : 0 or 1
  */
-inline size_t yabe_write_tag( yabe_cursor_t* cursor, int8_t tag )
+static inline size_t yabe_write_tag( yabe_cursor_t* cursor, int8_t tag )
 {
     if( cursor->len == 0 )
         return 0;
@@ -275,7 +275,7 @@ inline size_t yabe_write_tag( yabe_cursor_t* cursor, int8_t tag )
  *                       update it if the value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
-inline size_t yabe_write_null( yabe_cursor_t* cursor )
+static inline size_t yabe_write_null( yabe_cursor_t* cursor )
     { return yabe_write_tag( cursor, yabe_null_tag ); }
 
 
@@ -285,7 +285,7 @@ inline size_t yabe_write_null( yabe_cursor_t* cursor )
  *                       update it if value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
-inline size_t yabe_write_none( yabe_cursor_t* cursor )
+static inline size_t yabe_write_none( yabe_cursor_t* cursor )
     { return yabe_write_tag( cursor, yabe_none_tag ); }
 
 
@@ -296,7 +296,7 @@ inline size_t yabe_write_none( yabe_cursor_t* cursor )
  * @param value Boolean value to try writing
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
-inline size_t yabe_write_bool( yabe_cursor_t* cursor, bool value )
+static inline size_t yabe_write_bool( yabe_cursor_t* cursor, bool value )
     { return yabe_write_tag( cursor, value?yabe_true_tag:yabe_false_tag ); }
 
 
@@ -348,7 +348,7 @@ size_t yabe_write_string( yabe_cursor_t* cursor, size_t byteSize );
  * @param size Number of bytes to write at cursor position
  * @return the number of bytes written, , \e fail : < size, \e success : size
  */
-inline size_t yabe_write_data( yabe_cursor_t* cursor, const void* data, size_t size )
+static inline size_t yabe_write_data( yabe_cursor_t* cursor, const void* data, size_t size )
 {
     if( cursor->len == 0 )
         return 0;
@@ -376,7 +376,7 @@ inline size_t yabe_write_data( yabe_cursor_t* cursor, const void* data, size_t s
  *                       update it if the value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
-inline size_t yabe_write_blob( yabe_cursor_t* cursor )
+static inline size_t yabe_write_blob( yabe_cursor_t* cursor )
     { return yabe_write_tag( cursor, yabe_blob_tag ); }
 
 
@@ -387,7 +387,7 @@ inline size_t yabe_write_blob( yabe_cursor_t* cursor )
  * @param nbr Number of values in array : 0<= nbr <= 6
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
-inline size_t yabe_write_small_array( yabe_cursor_t* cursor, size_t nbr )
+static inline size_t yabe_write_small_array( yabe_cursor_t* cursor, size_t nbr )
 {
     if( nbr > 6 )
         return 0;
@@ -400,7 +400,7 @@ inline size_t yabe_write_small_array( yabe_cursor_t* cursor, size_t nbr )
  *                       update it if the value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
-inline size_t yabe_write_array_stream( yabe_cursor_t* cursor )
+static inline size_t yabe_write_array_stream( yabe_cursor_t* cursor )
     { return yabe_write_tag( cursor, yabe_arrays_tag ); }
 
 
@@ -411,7 +411,7 @@ inline size_t yabe_write_array_stream( yabe_cursor_t* cursor )
  * @param nbr Number of identfier, values pairs in object : 0<= nbr <= 6
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
-inline size_t yabe_write_small_object( yabe_cursor_t* cursor, size_t nbr )
+static inline size_t yabe_write_small_object( yabe_cursor_t* cursor, size_t nbr )
 {
     if( nbr > 6 )
         return 0;
@@ -424,7 +424,7 @@ inline size_t yabe_write_small_object( yabe_cursor_t* cursor, size_t nbr )
  *                       update it if the value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
-inline size_t yabe_write_object_stream( yabe_cursor_t* cursor )
+static inline size_t yabe_write_object_stream( yabe_cursor_t* cursor )
     { return yabe_write_tag( cursor, yabe_objects_tag ); }
 
 
@@ -434,7 +434,7 @@ inline size_t yabe_write_object_stream( yabe_cursor_t* cursor )
  *                       update it if the value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
-inline size_t yabe_write_end_stream( yabe_cursor_t* cursor )
+static inline size_t yabe_write_end_stream( yabe_cursor_t* cursor )
     { return yabe_write_tag( cursor, yabe_ends_tag ); }
 
 /** Tries writing the yabe signature ['Y','A','B','E', 0]
@@ -445,7 +445,7 @@ inline size_t yabe_write_end_stream( yabe_cursor_t* cursor )
  *                       update it if the value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
-inline size_t yabe_write_signature( yabe_cursor_t* cursor )
+static inline size_t yabe_write_signature( yabe_cursor_t* cursor )
     { return (cursor->len < 5) ? 0 : yabe_write_data( cursor, "YABE\0", 5 ); }
 
 // ----------------------------------------------------------------
@@ -460,7 +460,7 @@ inline size_t yabe_write_signature( yabe_cursor_t* cursor )
  * @param cursor Pointer on buffer to test and left unchanged
  * @return true if the end of buffer is reached
  */
-inline bool yabe_end_of_buffer( yabe_cursor_t* cursor )
+static inline bool yabe_end_of_buffer( yabe_cursor_t* cursor )
     { return cursor->len == 0; }
 
 /** Skip \e none value in buffer if any and return the number of bytes skipped
@@ -469,7 +469,7 @@ inline bool yabe_end_of_buffer( yabe_cursor_t* cursor )
  *                       is updated only if \e none tags where skipped
  * @return the number of bytes skipped
  */
-inline size_t yabe_skip_none_value( yabe_cursor_t* cursor )
+static inline size_t yabe_skip_none_value( yabe_cursor_t* cursor )
 {
     assert( cursor && cursor->ptr );
     size_t count = 0;
@@ -491,7 +491,7 @@ inline size_t yabe_skip_none_value( yabe_cursor_t* cursor )
  *                       is updated if the read operation succeeds
  * @return the tag value at the current cursor position
  */
-inline uint8_t yabe_peek_tag( yabe_cursor_t* cursor )
+static inline uint8_t yabe_peek_tag( yabe_cursor_t* cursor )
 {
     assert( cursor != NULL && !yabe_end_of_buffer(cursor) &&
             cursor->ptr && *((int8_t*)cursor->ptr) != yabe_none_tag);
@@ -510,7 +510,7 @@ inline uint8_t yabe_peek_tag( yabe_cursor_t* cursor )
  *                       cursor is updated if bytes where skipped
  * @return the number of bytes skipped, \e fail : 0, \e success : >0
  */
-inline size_t yabe_skip_tag( yabe_cursor_t* cursor )
+static inline size_t yabe_skip_tag( yabe_cursor_t* cursor )
 {
     assert( cursor && !yabe_end_of_buffer(cursor) &&
             cursor->ptr && *((int8_t*)cursor->ptr) != yabe_none_tag);
@@ -530,7 +530,7 @@ inline size_t yabe_skip_tag( yabe_cursor_t* cursor )
  *                       cursor is updated if bytes where skipped
  * @return the number of bytes skipped, \e fail : 0, \e success : >0
  */
-inline size_t yabe_skip_tag_if_same( yabe_cursor_t* cursor, int8_t tag )
+static inline size_t yabe_skip_tag_if_same( yabe_cursor_t* cursor, int8_t tag )
 {
     assert( cursor && !yabe_end_of_buffer(cursor) &&
             cursor->ptr && *((int8_t*)cursor->ptr) != yabe_none_tag);
@@ -549,7 +549,7 @@ inline size_t yabe_skip_tag_if_same( yabe_cursor_t* cursor, int8_t tag )
  *                       is updated if the read operation succeeds
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
-inline size_t yabe_read_null( yabe_cursor_t* cursor )
+static inline size_t yabe_read_null( yabe_cursor_t* cursor )
     { return yabe_skip_tag_if_same( cursor, yabe_null_tag ); }
 
 
@@ -566,7 +566,7 @@ inline size_t yabe_read_null( yabe_cursor_t* cursor )
  *                   otherwise value left unmodified
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
-inline size_t yabe_read_bool( yabe_cursor_t* cursor, bool* value )
+static inline size_t yabe_read_bool( yabe_cursor_t* cursor, bool* value )
 {
     int8_t tag = yabe_peek_tag( cursor );
     if( tag == yabe_true_tag )
@@ -646,7 +646,7 @@ size_t yabe_read_string( yabe_cursor_t* cursor, size_t* length );
  * @param size The number of bytes to read
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
-inline size_t yabe_read_data( yabe_cursor_t* cursor, void* data, size_t size )
+static inline size_t yabe_read_data( yabe_cursor_t* cursor, void* data, size_t size )
 {
     if( cursor->len == 0 )
         return 0;
@@ -679,7 +679,7 @@ inline size_t yabe_read_data( yabe_cursor_t* cursor, void* data, size_t size )
  *                       is updated if the read operation succeeds
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
-inline size_t yabe_read_blob( yabe_cursor_t* cursor )
+static inline size_t yabe_read_blob( yabe_cursor_t* cursor )
     { return yabe_skip_tag_if_same( cursor, yabe_blob_tag ); }
 
 
@@ -698,7 +698,7 @@ inline size_t yabe_read_blob( yabe_cursor_t* cursor )
  *                   a small array, otherwise value is left unmodified
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
-inline size_t yabe_read_small_array( yabe_cursor_t* cursor, int8_t *number )
+static inline size_t yabe_read_small_array( yabe_cursor_t* cursor, int8_t *number )
 {
     int8_t tag = yabe_peek_tag( cursor );
     if( (tag&(uint8_t)(-8)) != yabe_sarray_tag || tag == yabe_arrays_tag )
@@ -723,7 +723,7 @@ inline size_t yabe_read_small_array( yabe_cursor_t* cursor, int8_t *number )
  *                   a small array, otherwise value is left unmodified
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
-inline size_t yabe_read_small_object( yabe_cursor_t* cursor, int8_t *number )
+static inline size_t yabe_read_small_object( yabe_cursor_t* cursor, int8_t *number )
 {
     int8_t tag = yabe_peek_tag( cursor );
     if( (tag&(uint8_t)(-8)) != yabe_sobject_tag || tag == yabe_objects_tag )
@@ -746,7 +746,7 @@ inline size_t yabe_read_small_object( yabe_cursor_t* cursor, int8_t *number )
  *                       is updated if the read operation succeeds
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
-inline size_t yabe_read_array_stream( yabe_cursor_t* cursor )
+static inline size_t yabe_read_array_stream( yabe_cursor_t* cursor )
     { return yabe_skip_tag_if_same( cursor, yabe_arrays_tag ); }
 
 /** Try reading the value as an object stream, skipping subsequent \e none
@@ -763,7 +763,7 @@ inline size_t yabe_read_array_stream( yabe_cursor_t* cursor )
  *                       is updated if the read operation succeeds
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
-inline size_t yabe_read_object_stream( yabe_cursor_t* cursor )
+static inline size_t yabe_read_object_stream( yabe_cursor_t* cursor )
     { return yabe_skip_tag_if_same( cursor, yabe_objects_tag ); }
 
 /** Try reading the value as an end of stream, skipping subsequent \e none
@@ -779,7 +779,7 @@ inline size_t yabe_read_object_stream( yabe_cursor_t* cursor )
  *                       is updated if the read operation succeeds
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
-inline size_t yabe_read_end_stream( yabe_cursor_t* cursor )
+static inline size_t yabe_read_end_stream( yabe_cursor_t* cursor )
     { return yabe_skip_tag_if_same( cursor, yabe_objects_tag ); }
 
 /** Tries reading the yabe signature ['Y','A','B','E', 0]
@@ -792,7 +792,7 @@ inline size_t yabe_read_end_stream( yabe_cursor_t* cursor )
  *                       update it if the value could be written
  * @return the number of bytes read, \e fail : 0, \e bad version : 4, \e success : >4
  */
-inline size_t yabe_read_signature( yabe_cursor_t* cursor )
+static inline size_t yabe_read_signature( yabe_cursor_t* cursor )
 {
     if( cursor->len < 5 || !memcmp( cursor->ptr, "YABE", 4 ) )
         return 0;
