@@ -5,53 +5,62 @@
 #include <stdbool.h>
 
 /**
-   @file Low level C calls to write yabe encoded data in a user managed buffer
+   \mainpage Low level C calls to write and read YABE encoded data
 
-   \b Rational
+   \section intro_sec Introduction
 
-   This C library is a low level interface to write or read yabe encoded data.
-   What is not implemented is storage buffer management which can vary alot
-   according to the application.
+   YABE is the acronym of Yet Another Binary Encoding. The type of values it
+   may encode is limited to the one of Javascript, including the \e blob type.
+   It is a superset of the JSON supported data type set by the addition of
+   the \e blob value type that JSON, which is text only, can't easily and
+   efficiently represent.
 
-   The user could have a single block buffer doubling its size when it is
-   detected to be to small, he could use an array of buffers that may grow
-   as needed, or he could send the buffer content through a network connection
-   or apend its content into a file a and resume yabe data encoding with an
-   emptied buffer.
+   The rationale to choose the Javascript limited data set is because it is
+   sufficient for most applications and because it makes also the encoding
+   and decoding source code very small and easy to write, understand and check.
+   This is also most likely the reason of the JSON encoding success.
 
-   \b yabe writing
+   The benefit of a binary encoding is that marshalling is faster than with
+   JSON, because \e blob values are naturally represented in it and binary
+   encoding is slightly more compact than text only encoding.
 
-   All value writing are atomic except the data bytes of a string. This means
-   that if there is not enough room in the buffer to write all the value bytes
-   the operation fails. Since all function return the number of bytes written,
-   the buffer is full if any function return a value zero in which case no
-   bytes have been written in the buffer.
+   This encoding has been named YABE because there already exist a few
+   encodings with similar proporties around. YABE distinguishes itself from
+   them by its encoding and its API.
 
-   The yabe_write_data() is the only exception in that it will write as much
-   bytes as possible in the buffer and return the number of bytes written
-   which can be less then the number of bytes requested to write. The user
-   must take care to call this function again to write the remaining bytes
-   until all data bytes have been written.
+   \remarks This code taged YABE_v0_r0 is version 0 release 0 of the C
+            source code.
 
-   If there is no enough room in the buffer to write a value and the buffer
-   has a predefined fixed size, the remaining space of the buffer must be
-   padded with \e none value by calling the yabe_write_none() until it returns
-   zero. This ensures that reading operations will skip these bytes and
-   start reading values again in the next buffer block.
+   \section data_sec Data type set
 
-   \b yabe reading
+   The data set is the one defined for Javascript. It is the data set
+   supported by JSON which uses a text only encoding, with the addition of
+   the \e blob value type that is also part of Javascript.
 
-   As for writing, the yabe reading function assume yabe encoded value are
-   atomic. This means that all the bytes encoding a value are contiguous in
-   memory. It is an error if the buffer ends in the middle of a value. This
-   error situation can be detected by the user when the yabe reading function
-   returned zero and the cursor len field value is not zero.
+   A \e blob is an array of raw bytes (binary) with a mime type string.
+   Since YABE is binary encoded, it can easily and efficiently encode \e blob
+   values.
 
-   The only exception to this atomic value constrain are with the data bytes
-   of a string. The buffer may then end anywhere in the data byte sequence,
-   even before the first data byte.
+   \subsection atomics Atomic data values
 
-   \b Encoding
+    <ul>
+    <li> \b null ;
+    <li> \b Boolean : \e true & \e false ;
+    <li> \b Integer : 64 bit integer ;
+    <li> \b Floating \b point : 64 bit IEEE 754-2008 ;
+    <li> \b String : utf8 encoded character sequence ;
+    <li> \b Blob : array of raw bytes with a mime type string ;
+    </ul>
+
+   \subsection composed Composed values
+
+    <ul>
+    <li> \b Array : Sequence of any values ;
+    <li> \b Object : Sequence of a pair of value identifier (string) and any
+                     value ;
+    </ul>
+
+   \subsection encoding Data encoding
 
    Each value is encoded as a tag byte identifying its type, followed by an
    optional value size and the value itself. When possible the size or the
@@ -87,134 +96,208 @@
       -1..-32: [111xxxxx]                   : integer value -1..-32
     \endverbatim
 
-* The tag is a one byte value ;
-* Integer values from -32 to 127 are encoded as is as the tag value ;
-* Integer values are encoded as little endian signed integer ;
-* Floating point values are encoded in the IEEE 754-2008 format ;
-* A strings is a sequence of utf8 encoded chars with the number of bytes as
-  length ;
-* A length value are encoded as little endian unsigned integer of 16, 32 or
-  64 bits ;
-* A blob is a pair of strings, the first is a mime type and the second is a
-  sequence of raw bytes ;
-* An Array is encoded as a stream of values ;
-* An Object is encoded as a stream of string and value pairs where the string
-  is a unique identifier ;
-* An Object may not have an empty string as identifier ;
-* An array or an object stream is ended by the \e ends tag ;
-* If an array or an object have lest than 7 items, the \e sarray or \e sobject
-  encoding should be used where the number of items is encoded in the tag and
-  no \e ends tag is required ;
+    <ul>
+    <li> The tag is a one byte value ;
+    <li> Integer values from -32 to 127 are encoded as is as the tag value ;
+    <li> Integer values are encoded as little endian signed integer ;
+    <li> Floating point values are encoded in the IEEE 754-2008 format
+         (half, float, double) ;
+    <li> A strings is a sequence of utf8 encoded chars with the number of bytes
+         as length ;
+    <li> A length value is encoded as little endian unsigned integer of 16, 32
+         or 64 bits ;
+    <li> A blob is a pair of strings, the first is a mime type and the second
+         is a sequence of raw bytes ;
+    <li> An Array is encoded as a stream of values ;
+    <li> An Object is encoded as a stream of string and value pairs where the
+         string is a unique identifier ;
+    <li> An Object may not have an empty string as identifier ;
+    <li> An array or an object stream is ended by the \e ends tag ;
+    <li> If an array or an object have less than 7 items, the \e sarray or
+         \e sobject encoding should be used where the number of items is
+         encoded in the tag and there is no \e ends tag ;
+    </ul>
 
-  \b Examples
+   \subsection signature YABE encoded block signature
 
-  Writing some values.
+   A 5 byte signature may start a byte block containing YABE encoded data. The
+   first four bytes are the ASCII code 'Y', 'A', 'B', 'E' in that order, and
+   the fifth byte is the version number of the encoding. This short
+   specification describes the encoding version 0.
 
-  \code
-  // Some buffer with enough space
-  const size_t bufLen = 1024;
-  char * buffer[bufLen];
+   \remarks The size of a YABE encoded data block must be determined by the
+            context.
 
-  // A cursor where to write into the buffer
-  yabe_cursor_t wCur = { buffer, bufLen };
-  // msgLen keeps tracks of encoded data byte length, res if to check results
-  size_t msgLen = 0, res;
+   \section api YABE writing and reading API
 
-  // Write yabe encoded data signature (a 5 byte constant with version)
-  msgLen += res = yabe_write_signature( &wCur );
-  if( !res ) { ... not done because buffer would overflow ... }
+   The yabe.h and yabe.c files provide low level C functions to write and
+   read YABE encoded data. The provided code doesn't manage the buffer storage
+   because there are too many different ways to do this.
 
-  // Write a null value (will be coded into one byte)
-  msgLen += res = yabe_write_null( &wCur );
-  if( !res ) { ... not done because buffer would overflow ... }
+   The user may want to grow the buffer as needed, append a new buffer block
+   to a chain of block, send through the network or write to file the filled
+   buffer and resume with the buffer emptied, etc.
 
-  // Write a small integer value (will be coded into one byte)
-  msgLen += res = yabe_write_integer( &wCur, 123 );
-  if( !res ) { ... not done because buffer would overflow ... }
+   In the C API functions, YABE writing and reading use a \e cursor to keep
+   track where to write or read data in memory. When writing, the cursor holds
+   a pointer on position in memory where to write and the number of free
+   writable bytes in the buffer. When reading, the cursor holds a pointer on
+   the position in memory where the next data to read is located and the number
+   of bytes left to read in the buffer. The user is responsible to initialize
+   the cursor accordingly.
 
-  // Write a floating point value (will be coded into three byte)
-  msgLen += res = yabe_write_float( &wCur, 8.5 );
-  if( !res ) { ... not done because buffer would overflow ... }
+   All reading and writing functions return the number of bytes read or
+   written. The operation has thus failed if the returned value is 0. When
+   reading, the end of buffer should have been reached. If not, then an error
+   occured in the decoding.
 
-  // Write a string value
-  char* aString = "test string";
-  size_t strLen = strlen( aString ) + 1; // include trailing '\0'
-  msgLen += res = yabe_write_string( &wCur, strLen );
-  if( !res ) { ... not done because buffer would overflow ... }
-  msgLen += res = yabe_write_data( &wCur, aString, strLen );
-  if( res != strLen ) { ... string only partially written ... }
+   \subsection writing YABE data writing
 
-  // msgLen is the number of bytes of encoded data which starts
-  // at buffer[0];
-  \endcode
+   All YABE encoded values are written in contiguous bytes in the buffer. This
+   is called atomic values writing. If there is not enough room in the buffer
+   to write the value bytes, the operation failes and return 0 as the number of
+   bytes written. Atomic values can be at most 9 bytes long.
 
-  In case a writing fails, it means the data doesn't fit in the remaing free
-  space of the buffer. The user could then grow the buffer, chain another
-  buffer, or send or write the data to file the buffer and reset wCur to the
-  start of buffer.
+   The only exception is the yabe_write_data() functions which writes as much
+   data bytes as possible and will thus never fail. If all the bytes could not
+   be written, the user must resume the operation by a new call to write the
+   remaining data bytes when new buffer space has been made available.
 
-  If the data is encoded in a sequence of fixed size buffers referenced by an
-  iovec structure for instance, the unused remaining space of buffers must be
-  padded with \e none values so that these bytes will be skipped when reading
-  the encoded data. The following code example shows how to do that.
+   If YABE encoded data is to be written in an array of buffers with predefined
+   fixed size, the remaining space of the buffer must be padded with \e none
+   value which needs only a single byte as storage space. \e None values are
+   silently skipped when reading YABE encoded data.
 
-  \code
-  // Padding a buffer with \e none values
-  while( !yabe_end_of_buffer( &wCur ) )
-    yabe_write_none( &wCur );
-  \endcode
+   \subsection reading YABE data reading
+
+   Since any type of value can be stored at any position in a YABE encoded
+   stream, this API should be used in the following way
+   <ol>
+   <li> while there is data left to read from the YABE encoded stream ;
+   <li> for each possible type of data with \e none value as a last resort ;
+   <li> try reading the value
+   <li> if the return value is not 0 (it succeeded), resume with step 1 to
+        read the next value ;
+   <li> otherwise a fatal error occured for one of the following reasons which
+        can't be distinguished:
+       <ul>
+       <li> the value to read has been trucated ;
+       <li> a previous decoding error made reading out of sync ;
+       <li> data is not YABE encoded data.
+       </ul>
+   </ol>
+
+   Some values implies to be followed by a number of other values, sometimes
+   with a well defined type. It is the case for blobs that must be followed
+   by two strings and for arrays and objects as well. It is the user
+   responsibility to very that this implicit rules are respected.
+
+   \section examples Examples
+
+   \subsection writing_example Writing some values.
+
+   \code
+    // Some buffer with enough space
+    const size_t bufLen = 1024;
+    char * buffer[bufLen];
+
+    // A cursor where to write into the buffer
+    yabe_cursor_t wCur = { buffer, bufLen };
+    // msgLen keeps tracks of encoded data byte length, res if to check results
+    size_t msgLen = 0, res;
+
+    // Write yabe encoded data signature (a 5 byte constant with version)
+    msgLen += res = yabe_write_signature( &wCur );
+    if( !res ) { ... not done because buffer would overflow ... }
+
+    // Write a null value (will be coded into one byte)
+    msgLen += res = yabe_write_null( &wCur );
+    if( !res ) { ... not done because buffer would overflow ... }
+
+    // Write a small integer value (will be coded into one byte)
+    msgLen += res = yabe_write_integer( &wCur, 123 );
+    if( !res ) { ... not done because buffer would overflow ... }
+
+    // Write a floating point value (will be coded into three byte)
+    msgLen += res = yabe_write_float( &wCur, 8.5 );
+    if( !res ) { ... not done because buffer would overflow ... }
+
+    // Write a string value
+    char* aString = "test string";
+    size_t strLen = strlen( aString ) + 1; // include trailing '\0'
+    msgLen += res = yabe_write_string( &wCur, strLen );
+    if( !res ) { ... not done because buffer would overflow ... }
+    msgLen += res = yabe_write_data( &wCur, aString, strLen );
+    if( res != strLen ) { ... string only partially written ... }
+
+    // msgLen is the number of bytes of encoded data which starts
+    // at buffer[0];
+   \endcode
+
+   In case a writing fails, it means the data doesn't fit in the remaing free
+   space of the buffer. The user could then grow the buffer, chain another
+   buffer, or send or write the data to file the buffer and reset wCur to the
+   start of buffer.
+
+   If the data is encoded in a sequence of fixed size buffers referenced by an
+   iovec structure for instance, the unused remaining space of buffers must be
+   padded with \e none values so that these bytes will be skipped when reading
+   the encoded data. The following code example shows how to do that.
+
+   \code
+    // Padding a buffer with none values
+    while( !yabe_end_of_buffer( &wCur ) )
+        yabe_write_none( &wCur );
+   \endcode
+
+   \subsection reading_example Reading some values
+
+   The following example illustrates how to read different types of values.
+   However when reading YABE encoded data, the user should implement
+   \ref reading ''this algorithm''.
 
 
-  Reading the values. A yabe read operation fails if it returns 0 as the
-  number of bytes read. This happens if the end of buffer is reached,
-  of if the byte sequence is truncated. The later case is an error
-  condition which is identified if yabe_end_of_buffer() returns false.
+   \code
+    // set cursor where to read data
+    yabe_cursor_t rCur = { data, size };
+    size_t res;
 
-  \code
+    // Check yabe encoded data signature (a 5 byte constant with version)
+    res = yabe_read_signature( &rCur );
+    if( res == 0 ) { ... invalid yabe signature or end of buffer reached ... }
+    else if( res == 4 ) { ... invalid yabe encoding version ... }
+    assert( res == 5 );
 
-  // set cursor where to read data
-  yabe_cursor_t rCur = { buffer, msgLen };
+    // Read a null value (will be coded into one byte)
+    res = yabe_read_null( &rCur );
+    if( !res ) { ... next value is not null or end of buffer reached ... }
+    assert( res == 1 );
 
-  // Check yabe encoded data signature (a 5 byte constant with version)
-  res = yabe_read_signature( &rCur );
-  if( res == 0 ) { ... invalid yabe signature or end of buffer reached ... }
-  else if( res == 4 ) { ... invalid yabe encoding version ... }
+    // Read an integer value
+    int64_t intValue;
+    res = yabe_write_integer( &rCur, &intValue );
+    if( !res ) { ...  next value is not integer or end of buffer reached  ... }
+    assert( res == 1 || res == 3 || res == 5 || res == 9 );
 
-  // Read a null value (will be coded into one byte)
-  res = yabe_read_null( &rCur );
-  if( !res ) { ... next value is not null or end of buffer reached ... }
+    // Read a floating point value
+    res = yabe_write_float( &rCur, 8.5 );
+    if( !res ) { ... next value is not a float or end of buffer reached ... }
+    assert( res == 1 || res == 3 || res == 5 || res == 9 );
 
-  // Read an integer value
-  int64_t intValue;
-  res = yabe_write_integer( &rCur, &intValue );
-  if( !res ) { ...  next value is not integer or end of buffer reached  ... }
+    // Read a string
+    size_t strLen;
+    res = yabe_read_string( &rCur, &strLen ); // read the string length
+    if( !res ) { ... next value is not a string or end of buffer reached ... }
+    assert( res == 1 || res == 3 || res == 5 || res == 9 );
+    char* aString = malloc( strLen ); // get a storage for the string
+    res = yabe_read_data( &rCur, aString, strLen );
+    if( res != strLen ) { ... string partially read, end of buffer reached ... }
 
-  // Read a floating point value
-  res = yabe_write_float( &rCur, 8.5 );
-  if( !res ) { ... next value is not a float or end of buffer reached ... }
+    // Check if end of buffer reached
+    if( yabe_end_of_buffer( &rCur ) ) { ... end of buffer is reached ... }
+    else { ... there is some more data ... }
 
-  // Read a string value
-  size_t strLen;
-  res = yabe_read_string( &rCur, &strLen );
-  if( !res ) { ... next value is not a string or end of buffer reached ... }
-  char* aString = malloc( strLen );
-  res = yabe_read_data( &rCur, aString, strLen );
-  if( res != strLen ) { ... string partially read, end of buffer reached ... }
-
-  // Check if end of buffer reached
-  if( yabe_end_of_buffer( &rCur ) ) { ... end of buffer is reached ... }
-  else { ... there is some more data ... }
-
-  \endcode
-
-  Since different types of value may be intermixed, reading data should be
-  performed by probing reading the different type of values unless the
-  end of buffer was reached. If no value type mach then it is an error
-  condition.
-
-  The user could also directly trigger some action specific actions according
-  to the type of value read from the yabe encoded data.
-
+   \endcode
 */
 
 /** Cursor in buffer where yabe encoded data is to be written or read */
@@ -224,6 +307,7 @@ typedef struct yabe_cursor_t
     size_t len;       ///< Number of bytes left to read or to write
 } yabe_cursor_t;
 
+/// @cond DEV
 /* Tag codes */
 typedef char yabe_tag_t;
 #define yabe_str6_tag    ((int8_t)-128)
@@ -248,13 +332,18 @@ typedef char yabe_tag_t;
 #define yabe_sobject_tag ((int8_t)-40)
 #define yabe_objects_tag ((int8_t)-33)
 
+// ----------------------------------------------------------------
+//
+//                YABE reading functions
+//
+// ----------------------------------------------------------------
 
-/** Tries writing a tag value and return the number of bytes written
+/** Tries writing a tag value and returns the number of bytes written
  *
  * This is a low level function used internally by yabe. The user
  * must not call it.
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if the value could be written
  * @param tag Tag value to write at cursor position
  * @return the number of bytes written : 0 or 1
@@ -268,20 +357,17 @@ static inline size_t yabe_write_tag( yabe_cursor_t* cursor, int8_t tag )
     --cursor->len;
     return 1;
 }
+/// @endcond
 
-/** Tries writing a \e null value and return the number of bytes written
+
+/** Tries writing a \e none value and returns the number of bytes written
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
- *                       update it if the value could be written
- * @return the number of bytes written, \e fail : 0, \e success : 1
- */
-static inline size_t yabe_write_null( yabe_cursor_t* cursor )
-    { return yabe_write_tag( cursor, yabe_null_tag ); }
-
-
-/** Tries writing a \e none tag and return the number of bytes written
+ * The purpose of this value is to be used as padding or to overwrite
+ * encoded values so that they become ignored when reading.
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * \note This value encoded in one byte is silently skipped when reading.
+ *
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
@@ -289,90 +375,102 @@ static inline size_t yabe_write_none( yabe_cursor_t* cursor )
     { return yabe_write_tag( cursor, yabe_none_tag ); }
 
 
-/** Tries writing the boolean value and return the number of bytes written
+/** Tries writing a \e null value and returns the number of bytes written
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * @param[in,out] cursor Pointer on buffer info where to write value,
+ *                       update it if the value could be written
+ * @return the number of bytes written, \e fail : 0, \e success : 1
+ */
+static inline size_t yabe_write_null( yabe_cursor_t* cursor )
+    { return yabe_write_tag( cursor, yabe_null_tag ); }
+
+
+/** Tries writing the boolean value and returns the number of bytes written
+ *
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if value could be written
- * @param value Boolean value to try writing
+ * @param value Boolean value to try writing at cursor position
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
 static inline size_t yabe_write_bool( yabe_cursor_t* cursor, bool value )
     { return yabe_write_tag( cursor, value?yabe_true_tag:yabe_false_tag ); }
 
 
-/** Tries writing the integer value and return the number of bytes written
+/** Tries writing the integer value and returns the number of bytes written
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * \param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if value could be written
- * @param value 64bit integer value to write at cursor position
- * @return the number of bytes written, \e fail : 0, \e success : 1, 3, 5 or 9
+ * \param value 64bit integer value to try writing at cursor position
+ * \return the number of bytes written, \e fail : 0, \e success : 1, 3, 5 or 9
  */
 size_t yabe_write_integer( yabe_cursor_t* cursor, int64_t value );
 
 
-/** Tries writing the double float value and return the number of bytes written
+/** Tries writing the double float value and returns the number of bytes
+ *  written
  *
  * Denormalized floating point values are rounded to 0.
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if value could be written
- * @param value 64bit floating point value to write at cursor position
+ * @param value 64bit floating point value to try writing at cursor position
  * @return the number of bytes written, \e fail : 0, \e success : 1, 3, 5 or 9
  */
 size_t yabe_write_float( yabe_cursor_t* cursor, double value );
 
 
-/** Tries writing the string tag and byte size values and
- *  return the number of bytes written
+/** Tries writing the string tag and its byte size values and returns the
+ *  number of bytes written
  *
- *  Only the tag and the string byte size are written in the buffer. The
- *  string bytes should be written using the yabe_write_data() function.
+ *  Only the string value tag and the string byte size are written at the
+ *  cursor position. The string bytes (utf8 chars) must be written using the
+ *  yabe_write_data() function.
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if value could be written
- * @param byteSize byte length of the utf8 encoded string
+ * @param byteSize byte length of the utf8 encoded string to try writing at
+ *                 cursor position
  * @return the number of bytes written, \e fail : 0, \e success : 1, 3, 5 or 9
  */
 size_t yabe_write_string( yabe_cursor_t* cursor, size_t byteSize );
 
 
-/** Tries writing the sequence of bytes at cursor position and
- *  return the number of bytes written.
+/** Writes as much bytes as possible at cursor position until all bytes of the
+ *  sequence are written or the end of buffer is met, and returns the number
+ *  of bytes written.
  *
  *  The data may be partially written. A returned value smaller than \e size
- *  means the data could not be fully written.
+ *  means the data could not be fully written. One or more additionnal calls
+ *  to this function are required to write the remaining bytes of data.
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if value could be written
- * @param data Pointer on the bytes to write at cursor
+ * @param data Pointer on the bytes to writing at
+ *                 cursor position
  * @param size Number of bytes to write at cursor position
- * @return the number of bytes written, , \e fail : < size, \e success : size
+ * @return the number of bytes written, \e incomplete : < \e size,
+ *         \e complete : \e size
  */
 static inline size_t yabe_write_data( yabe_cursor_t* cursor, const void* data, size_t size )
 {
-    if( cursor->len == 0 )
+    if( cursor->len == 0 || size == 0 )
         return 0;
     if( size > cursor->len )
-    {
         size = cursor->len;
-        memcpy( cursor->ptr, data, size );
-        cursor->ptr += size;
-        cursor->len = 0;
-        return size;
-    }
     memcpy( cursor->ptr, data, size );
     cursor->ptr += size;
     cursor->len -= size;
     return size;
 }
 
-/** Tries writing a blob tag and return the number of bytes written
+
+/** Tries writing a blob tag and returns the number of bytes written
  *
- * A blob must be followed by two strings. The first string encodes the mime
- * type of the blob data. The second string contains the blob data which are
+ * A blob \e must be followed by two strings. The first string encodes the mime
+ * type of the blob data. The second string contains the blob data made of
  * raw bytes. The second string doesn't necessarily contain utf8 chars.
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if the value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
@@ -380,23 +478,20 @@ static inline size_t yabe_write_blob( yabe_cursor_t* cursor )
     { return yabe_write_tag( cursor, yabe_blob_tag ); }
 
 
-/** Tries writing a small array tag and return the number of bytes written
+/** Tries writing a small array tag and returns the number of bytes written
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if the value could be written
  * @param nbr Number of values in array : 0<= nbr <= 6
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
 static inline size_t yabe_write_small_array( yabe_cursor_t* cursor, size_t nbr )
-{
-    if( nbr > 6 )
-        return 0;
-    return yabe_write_tag( cursor, yabe_sarray_tag | nbr );
-}
+    { return (nbr > 6) ? 0 : yabe_write_tag( cursor, yabe_sarray_tag|nbr ); }
 
-/** Tries writing an array stream tag and return the number of bytes written
+
+/** Tries writing an array stream tag and returns the number of bytes written
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if the value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
@@ -404,23 +499,20 @@ static inline size_t yabe_write_array_stream( yabe_cursor_t* cursor )
     { return yabe_write_tag( cursor, yabe_arrays_tag ); }
 
 
-/** Tries writing a small object tag and return the number of bytes written
+/** Tries writing a small object tag and returns the number of bytes written
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ *@param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if the value could be written
  * @param nbr Number of identfier, values pairs in object : 0<= nbr <= 6
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
 static inline size_t yabe_write_small_object( yabe_cursor_t* cursor, size_t nbr )
-{
-    if( nbr > 6 )
-        return 0;
-    return yabe_write_tag( cursor, yabe_sobject_tag | nbr );
-}
+    { return (nbr > 6) ? 0 : yabe_write_tag( cursor, yabe_sobject_tag|nbr ); }
 
-/** Tries writing an object stream tag and return the number of bytes written
+
+/** Tries writing an object stream tag and returns the number of bytes written
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if the value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
@@ -428,48 +520,99 @@ static inline size_t yabe_write_object_stream( yabe_cursor_t* cursor )
     { return yabe_write_tag( cursor, yabe_objects_tag ); }
 
 
-/** Tries writing the end stream tag and return the number of bytes written
+/** Tries writing the end stream tag and returns the number of bytes written
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if the value could be written
  * @return the number of bytes written, \e fail : 0, \e success : 1
  */
 static inline size_t yabe_write_end_stream( yabe_cursor_t* cursor )
     { return yabe_write_tag( cursor, yabe_ends_tag ); }
 
-/** Tries writing the yabe signature ['Y','A','B','E', 0]
+
+/** Tries writing the yabe signature ['Y','A','B','E', 0] and returns
+ *  the number of bytes written
  *
- * It requires there is at least 5 bytes available to write in the buffer.
- *
- * @param cursor[in,out] Pointer on buffer info where to write value,
+ * @param[in,out] cursor Pointer on buffer info where to write value,
  *                       update it if the value could be written
- * @return the number of bytes written, \e fail : 0, \e success : 1
+ * @return the number of bytes written, \e fail : 0, \e success : 5
  */
 static inline size_t yabe_write_signature( yabe_cursor_t* cursor )
     { return (cursor->len < 5) ? 0 : yabe_write_data( cursor, "YABE\0", 5 ); }
 
+
+
 // ----------------------------------------------------------------
 //
-// YABE reading operations
+//                YABE reading functions
 //
+// ----------------------------------------------------------------
 
 
-
-/** Return true if the end of buffer is reached
+/** Return true if the end of buffer is reached, false otherwise
  *
- * @param cursor Pointer on buffer to test and left unchanged
- * @return true if the end of buffer is reached
+ * @param cursor Pointer on buffer to test
+ * @return true if the end of buffer is reached, false otherwise
  */
-static inline bool yabe_end_of_buffer( yabe_cursor_t* cursor )
-    { return cursor->len == 0; }
+static inline bool yabe_end_of_buffer( const yabe_cursor_t* cursor )
+    { assert( cursor ); return cursor->len == 0; }
 
-/** Skip \e none value in buffer if any and return the number of bytes skipped
+
+/// @cond DEV
+/** Return the tag value at cursor position without updating the cursor
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * Requires the end of buffer is not reached and the value at current
+ * cursor position is not a \e none value.
+ *
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
+ *                       is updated if the read operation succeeds
+ * @return the tag value at the current cursor position
+ */
+static inline uint8_t yabe_peek_tag( const yabe_cursor_t* cursor )
+{
+    assert( cursor && cursor->ptr && cursor->len );
+    return *((int8_t*)cursor->ptr);
+}
+
+
+/** Skip a tag byte a cursor position and return 1 as the number of bytes read
+ *
+ * Requires the cursor is not at the end of buffer when the function is called.
+ *
+ * @param[in,out] cursor Pointer on the tag to skip in the buffer, the cursor
+ *                       is updated to point on the next byte in the buffer
+ * @return 1 as the number of bytes "read"
+ */
+static inline void yabe_skip_tag( yabe_cursor_t* cursor )
+{
+    assert( cursor && cursor->ptr && cursor->len );
+    cursor->ptr += sizeof(int8_t);
+    cursor->len -= sizeof(int8_t);
+    return sizeof(int8_t);
+}
+
+
+/** Skip tag if it is the same as the argument and returns the number of byte
+ *  skipped
+ *
+ * Requires the cursor is not at the end of buffer when the function is called.
+ *
+ * @param[in,out] cursor Pointer on buffer where to try skipping bytes, the
+ *                       cursor is updated if bytes where skipped
+ * @return the number of bytes skipped, \e fail : 0, \e success : 1
+ */
+static inline size_t yabe_skip_tag_if_is( yabe_cursor_t* cursor, int8_t tag )
+    { return (yabe_peek_tag(cursor) == tag) ? yabe_skip_tag( cursor ) : 0; }
+/// @endcond
+
+
+/** Skip \e none value in buffer if any and returns the number of bytes skipped
+ *
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated only if \e none tags where skipped
  * @return the number of bytes skipped
  */
-static inline size_t yabe_skip_none_value( yabe_cursor_t* cursor )
+static inline size_t yabe_read_none( yabe_cursor_t* cursor )
 {
     assert( cursor && cursor->ptr );
     size_t count = 0;
@@ -482,245 +625,163 @@ static inline size_t yabe_skip_none_value( yabe_cursor_t* cursor )
     return count;
 }
 
-/** Return the tag value without updating the cursor
+
+/** Try reading the value as null and returns the number of byte read
  *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
+ * Requires the cursor is not at the end of buffer when the function is called.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
- * @return the tag value at the current cursor position
- */
-static inline uint8_t yabe_peek_tag( yabe_cursor_t* cursor )
-{
-    assert( cursor != NULL && !yabe_end_of_buffer(cursor) &&
-            cursor->ptr && *((int8_t*)cursor->ptr) != yabe_none_tag);
-    return *((int8_t*)cursor->ptr);
-}
-
-
-/** Skip tag and subsequent \e none value in buffer if any and return the
- *  total number of bytes skipped
- *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
- * Any trailing \e none value are skipped if it succeeds.
- *
- * @param cursor[in,out] Pointer on buffer where to try skipping bytes, the
- *                       cursor is updated if bytes where skipped
- * @return the number of bytes skipped, \e fail : 0, \e success : >0
- */
-static inline size_t yabe_skip_tag( yabe_cursor_t* cursor )
-{
-    assert( cursor && !yabe_end_of_buffer(cursor) &&
-            cursor->ptr && *((int8_t*)cursor->ptr) != yabe_none_tag);
-    cursor->ptr += sizeof(int8_t);
-    cursor->len -= sizeof(int8_t);
-    return sizeof(int8_t) + yabe_skip_none_value( cursor );
-}
-
-/** Skip tag and subsequent \e none value if any if it is the same as the
- * value given as parameter and return the number of byte skipped
- *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
- * Any trailing \e none value are skipped if it succeeds.
- *
- * @param cursor[in,out] Pointer on buffer where to try skipping bytes, the
- *                       cursor is updated if bytes where skipped
- * @return the number of bytes skipped, \e fail : 0, \e success : >0
- */
-static inline size_t yabe_skip_tag_if_same( yabe_cursor_t* cursor, int8_t tag )
-{
-    assert( cursor && !yabe_end_of_buffer(cursor) &&
-            cursor->ptr && *((int8_t*)cursor->ptr) != yabe_none_tag);
-    return (tag == *((int8_t*)cursor->ptr)) ? yabe_skip_tag( cursor ) : 0;
-}
-
-
-/** Try reading the value as null, skipping subsequent \e none values if any,
- *  and return the number of byte read
- *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
- * Any trailing \e none value are skipped if it succeeds.
- *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
- *                       is updated if the read operation succeeds
- * @return the number of bytes read, \e fail : 0, \e success : >0
+ * @return the number of bytes read, \e fail : 0, \e success : 1
  */
 static inline size_t yabe_read_null( yabe_cursor_t* cursor )
-    { return yabe_skip_tag_if_same( cursor, yabe_null_tag ); }
+    { return yabe_skip_tag_if_is( cursor, yabe_null_tag ); }
 
 
-/** Try reading the value as a boolean, skipping subsequent \e none values if
- *  any, and return the number of byte read
+/** Try reading the value as a boolean and returns the number of byte read
  *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
- * Any trailing \e none value are skipped if it succeeds.
+ * Requires the cursor is not at the end of buffer when the function is called.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
- * @param value[out] the boolean value if the value is a boolean,
- *                   otherwise value left unmodified
- * @return the number of bytes read, \e fail : 0, \e success : >0
+ * @param[out] value the boolean value if the value is a boolean,
+ *                   otherwise the value is left unchanged
+ * @return the number of bytes read, \e fail : 0, \e success : 1
  */
 static inline size_t yabe_read_bool( yabe_cursor_t* cursor, bool* value )
 {
     int8_t tag = yabe_peek_tag( cursor );
     if( tag == yabe_true_tag )
-    {
         *value = true;
-        return yabe_skip_tag( cursor );
-    }
     else if( tag == yabe_false_tag )
-    {
         *value = false;
-        return yabe_skip_tag( cursor );
-    }
     else
         return 0;
+    return yabe_skip_tag( cursor );
 }
 
-/** Try reading a value as an integer, skipping subsequent \e none values if
- *  any, and return the number of byte read
+
+/** Try reading the value as an integer, skipping subsequent \e none values if
+ *  any, and returns the number of byte read
  *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
- * Any trailing \e none value are skipped if it succeeds.
+ * Requires the cursor is not at the end of buffer when the function is called.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
- * @param value[out] the integer value if the value is an integer,
- *                   otherwise value is left unmodified
- * @return the number of bytes read, \e fail : 0, \e success : >0
+ * @param[out] value the integer value if the value is an integer,
+ *                   otherwise the value is left unchanged
+ * @return the number of bytes read, \e fail : 0, \e success : 1, 3, 5, 9
  */
 size_t yabe_read_integer( yabe_cursor_t* cursor, int64_t* value );
 
-/** Try reading a value as a double float, skipping subsequent \e none values
- *  if any, and return the number of byte read
+
+/** Try reading the value as a double float and returns the number of byte read
  *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
- *
+ * Requires the cursor is not at the end of buffer when the function is called.
  * Assume double or float is the IEEE 754 double or float representation
- * Any trailing \e none value are skipped if it succeeds.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
- * @param value[out] the double float value if the value is a double float,
- *                   otherwise value is left unmodified
- * @return the number of bytes read, \e fail : 0, \e success : >0
+ * @param[out] value the double float value if the value is a double float,
+ *                   otherwise the value is left unchanged
+ * @return the number of bytes read, \e fail : 0, \e success : 1, 3, 5, 9
  */
 size_t yabe_read_float( yabe_cursor_t* cursor, double* value );
 
-/** Try reading a value as a string, skipping subsequent \e none values
- *  if any, and return the number of byte read
+
+/** Try reading the value as a string and returns the number of byte read
  *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
- * This function simply reads the string length if it succeeds. A call to
- * yabe_read_data() is required to read the string bytes.
- * Any trailing \e none value are skipped if it succeeds.
+ * Requires the cursor is not at the end of buffer when the function is called.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * \note This function only reads the string byte length if it succeeds. A
+ * subsequent call to yabe_read_data() is required to read the string bytes.
+ *
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
- * @param length[out] the string length if the value is a string,
- *                   otherwise length is left unmodified
- * @return the number of bytes read, \e fail : 0, \e success : >0
+ * @param[out] length the string byte length if the value is a string,
+ *                   otherwise the length value is left unchanged
+ * @return the number of bytes read, \e fail : 0, \e success : 1, 3, 5, 9
  */
 size_t yabe_read_string( yabe_cursor_t* cursor, size_t* length );
 
-/** Try reading data bytes at cursor position, skipping subsequent \e none values
- *  if any, and return the number of byte read
+
+/** Try reading the requested number of data bytes at the cursor position
+ *  and returns the number of bytes effectively read
  *
  *  Once the function has read all the data bytes it was requested to read
  *  it skips all subsequent \e none value to be ready for reading the next
  *  value.
- *  Any trailing \e none value are skipped if it completes and succeeds.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
- * @param data[in,out] The pointer where to store data bytes read
+ * @param[out] data The pointer where to store data bytes read
  * @param size The number of bytes to read
- * @return the number of bytes read, \e fail : 0, \e success : >0
+ * @return the number of bytes read, \e incomplete : < size, \e complete : size
  */
 static inline size_t yabe_read_data( yabe_cursor_t* cursor, void* data, size_t size )
 {
-    if( cursor->len == 0 )
+    if( cursor->len == 0 || size == 0 )
         return 0;
     if( size > cursor->len )
-    {
         size = cursor->len;
-        memcpy( data, cursor->ptr, size );
-        cursor->ptr += size;
-        cursor->len = 0;
-        return size;
-    }
     memcpy( data, cursor->ptr, size );
     cursor->ptr += size;
     cursor->len -= size;
-    return size + yabe_skip_none_value( cursor );
+    return size;
 }
 
-/** Try reading the value as blob value, skipping subsequent \e none values if
- *  any, and return the number of byte read
+
+/** Try reading the value as blob and returns the number of byte read
  *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
+ * Requires the cursor is not at the end of buffer when the function is called.
  *
  * A blob value is followed by two strings. The first string specifies the
  * mime type of the blob data and the second string contains the raw bytes
  * of the blob.
- * Any trailing \e none value are skipped if it succeeds.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
- * @return the number of bytes read, \e fail : 0, \e success : >0
+ * @return the number of bytes read, \e fail : 0, \e success : 1
  */
 static inline size_t yabe_read_blob( yabe_cursor_t* cursor )
-    { return yabe_skip_tag_if_same( cursor, yabe_blob_tag ); }
+    { return yabe_skip_tag_if_is( cursor, yabe_blob_tag ); }
 
 
-/** Try reading the value as a small array, skipping subsequent \e none
- *  values if any, and return the number of byte read
+/** Try reading the value as a small array and returns the number of byte read
  *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
- * If the returned value is none zero, this value is followed by \e number
- * values contained in the array.
- * Any trailing \e none value are skipped if it succeeds.
+ * Requires the cursor is not at the end of buffer when the function is called.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * If the returned value is none zero, it is followed by \e number
+ * YABE encoded values corresponding to the items of the array.
+ *
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
- * @param number[out] the number of values in the small array if the value is
- *                   a small array, otherwise value is left unmodified
- * @return the number of bytes read, \e fail : 0, \e success : >0
+ * @param[out] number the number of items in the small array if the read
+ *                    succeeds, otherwise number is left unchanged
+ * @return the number of bytes read, \e fail : 0, \e success : 1
  */
 static inline size_t yabe_read_small_array( yabe_cursor_t* cursor, int8_t *number )
 {
     int8_t tag = yabe_peek_tag( cursor );
-    if( (tag&(uint8_t)(-8)) != yabe_sarray_tag || tag == yabe_arrays_tag )
+    if( (tag&~(uint8_t)7) != yabe_sarray_tag || tag == yabe_arrays_tag )
         return 0;
     *number = tag & (uint8_t)7;
     return yabe_skip_tag( cursor );
 }
 
-/** Try reading the value as a small object, skipping subsequent \e none
- *  values if any, and return the number of byte read
+
+/** Try reading the value as a small object and returns the number of byte read
  *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
- * If the returned value is none zero, this value is followed by \e number
- * pairs of string, value contained in the object where string is a value
- * identifier.
- * Any trailing \e none value are skipped if it succeeds.
+ * Requires the cursor is not at the end of buffer when the function is called.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * If the returned value is none zero, it is followed by \e number
+ * of string and YABE encoded values pairs corresponding to the items of the
+ * object.
+ *
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
- * @param number[out] the number of values in the small object if the value is
- *                   a small array, otherwise value is left unmodified
+ * @param[out] number the number of items in the small object if the read
+ *                    succeeds, otherwise number is left unchanged
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
 static inline size_t yabe_read_small_object( yabe_cursor_t* cursor, int8_t *number )
@@ -732,65 +793,62 @@ static inline size_t yabe_read_small_object( yabe_cursor_t* cursor, int8_t *numb
     return yabe_skip_tag( cursor );
 }
 
+
 /** Try reading the value as an array stream, skipping subsequent \e none
- *  values if any, and return the number of byte read
+ *  values if any, and returns the number of byte read
  *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
+ * Requires the cursor is not at the end of buffer when the function is called.
  * If the returned value is none zero, this value is followed by a sequence of
  * values contained in the array. The sequence ends when an end stream value
  * could be read.
- * Any trailing \e none value are skipped if it succeeds.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
 static inline size_t yabe_read_array_stream( yabe_cursor_t* cursor )
-    { return yabe_skip_tag_if_same( cursor, yabe_arrays_tag ); }
+    { return yabe_skip_tag_if_is( cursor, yabe_arrays_tag ); }
+
 
 /** Try reading the value as an object stream, skipping subsequent \e none
- *  values if any, and return the number of byte read
+ *  values if any, and returns the number of byte read
  *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
+ * Requires the cursor is not at the end of buffer when the function is called.
  * If the returned value is none zero, this value is followed by a sequence of
  * pairs of string,value contained in the object, where the string is the value
  * identifier. The sequence ends when an end stream value could be read.
- * Any trailing \e none value are skipped if it succeeds.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
 static inline size_t yabe_read_object_stream( yabe_cursor_t* cursor )
-    { return yabe_skip_tag_if_same( cursor, yabe_objects_tag ); }
+    { return yabe_skip_tag_if_is( cursor, yabe_objects_tag ); }
+
 
 /** Try reading the value as an end of stream, skipping subsequent \e none
- *  values if any, and return the number of byte read
+ *  values if any, and returns the number of byte read
  *
- * Requires the end of buffer is not reached and previous none values have
- * been skipped.
+ * Requires the cursor is not at the end of buffer when the function is called.
  * If the returned value is none zero, the end of array or object value stream
  * has been reached.
- * Any trailing \e none value are skipped if it succeeds.
  *
- * @param cursor[in,out] Pointer on buffer where to try reading, the cursor
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
  *                       is updated if the read operation succeeds
  * @return the number of bytes read, \e fail : 0, \e success : >0
  */
 static inline size_t yabe_read_end_stream( yabe_cursor_t* cursor )
-    { return yabe_skip_tag_if_same( cursor, yabe_objects_tag ); }
+    { return yabe_skip_tag_if_is( cursor, yabe_objects_tag ); }
+
 
 /** Tries reading the yabe signature ['Y','A','B','E', 0]
  *
- * It requires there are at least 5 bytes to read in the buffer;
+ * It requires there are at least 5 bytes to read in the buffer.
  * Reads the first 4 bytes if they match, read also the version if it matches.
- * Any trailing \e none value are skipped if it succeeds.
  *
- * @param cursor[in,out] Pointer on buffer info where to write value,
- *                       update it if the value could be written
- * @return the number of bytes read, \e fail : 0, \e bad version : 4, \e success : >4
+ * @param[in,out] cursor Pointer on buffer where to try reading, the cursor
+ *                       is updated if the read operation succeeds
+ * @return the number of bytes read, \e fail : 0, \e bad version : 4, \e success : 5
  */
 static inline size_t yabe_read_signature( yabe_cursor_t* cursor )
 {
@@ -804,7 +862,7 @@ static inline size_t yabe_read_signature( yabe_cursor_t* cursor )
     }
     cursor->ptr += 5;
     cursor->len -= 5;
-    return 5 + yabe_skip_none_value( cursor );
+    return 5;
 }
 
 

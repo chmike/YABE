@@ -224,8 +224,7 @@ size_t yabe_write_string( yabe_cursor_t* cursor, size_t strLen )
 }
 
 
-/* Try reading a value as an integer, skipping subsequent \e none values if
- *  any, and return the number of byte read */
+/* Try reading a value as an integer and return the number of byte read */
 size_t yabe_read_integer( yabe_cursor_t* cursor, int64_t* value )
 {
     int8_t tag = yabe_peek_tag( cursor );
@@ -243,7 +242,7 @@ size_t yabe_read_integer( yabe_cursor_t* cursor, int64_t* value )
         *value = *((int16_t*)cursor->ptr);
         cursor->ptr += sizeof(int16_t);
         cursor->len -= len;
-        return len + yabe_skip_none_value( cursor );
+        return len;
     }
     if( tag == yabe_int32_tag )
     {
@@ -254,7 +253,7 @@ size_t yabe_read_integer( yabe_cursor_t* cursor, int64_t* value )
         *value = *((int32_t*)cursor->ptr);
         cursor->ptr += sizeof(int32_t);
         cursor->len -= len;
-        return len + yabe_skip_none_value( cursor );
+        return len;
     }
     if( tag == yabe_int64_tag )
     {
@@ -265,14 +264,13 @@ size_t yabe_read_integer( yabe_cursor_t* cursor, int64_t* value )
         *value = *((int64_t*)cursor->ptr);
         cursor->ptr += sizeof(int64_t);
         cursor->len -= len;
-        return len + yabe_skip_none_value( cursor );
+        return len;
     }
     return 0;
 }
 
 
-/* Try reading a value as a double float, skipping subsequent \e none values
- *  if any, and return the number of byte read */
+/* Try reading a value as a double float and return the number of byte read */
 size_t yabe_read_float( yabe_cursor_t* cursor, double* value )
 {
     int8_t tag = yabe_peek_tag( cursor );
@@ -284,7 +282,7 @@ size_t yabe_read_float( yabe_cursor_t* cursor, double* value )
         cursor->ptr += sizeof(int8_t);
         *value = 0.;
         cursor->len -= len;
-        return len + yabe_skip_none_value( cursor );
+        return len;
     }
     if( tag == yabe_flt16_tag )
     {
@@ -316,7 +314,7 @@ size_t yabe_read_float( yabe_cursor_t* cursor, double* value )
         uint64_t* rPtr = &dr;
         *value = *((double*)(rPtr));              // assign value as double float
         cursor->len -= len;
-        return len + yabe_skip_none_value( cursor );
+        return len;
     }
     if( tag == yabe_flt32_tag )
     {
@@ -327,7 +325,7 @@ size_t yabe_read_float( yabe_cursor_t* cursor, double* value )
         *value = *((float*)cursor->ptr);
         cursor->ptr += sizeof(uint32_t);
         cursor->len -= len;
-        return len + yabe_skip_none_value( cursor );
+        return len;
     }
     if( tag == yabe_flt64_tag )
     {
@@ -338,13 +336,12 @@ size_t yabe_read_float( yabe_cursor_t* cursor, double* value )
         *value = *((double*)cursor->ptr);
         cursor->ptr += sizeof(uint64_t);
         cursor->len -= len;
-        return len + yabe_skip_none_value( cursor );
+        return len;
     }
     return 0;
 }
 
-/* Try reading a value as a string, skipping subsequent \e none values
- *  if any, and return the number of byte read */
+/* Try reading a value as a string and return the number of byte read */
 size_t yabe_read_string( yabe_cursor_t* cursor, size_t* length )
 {
     int8_t tag = yabe_peek_tag( cursor );
@@ -356,7 +353,7 @@ size_t yabe_read_string( yabe_cursor_t* cursor, size_t* length )
         cursor->ptr += sizeof(int8_t);
         *length = tag & (int8_t)0x3F;
         cursor->len -= len;
-        return len + yabe_skip_none_value( cursor );
+        return len;
     }
     if( tag == yabe_str16_tag )
     {
@@ -367,7 +364,7 @@ size_t yabe_read_string( yabe_cursor_t* cursor, size_t* length )
         *length = *((uint16_t*)cursor->ptr);
         cursor->ptr += sizeof(uint16_t);
         cursor->len -= len;
-        return len + yabe_skip_none_value( cursor );
+        return len;
     }
     if( tag == yabe_str32_tag )
     {
@@ -378,7 +375,7 @@ size_t yabe_read_string( yabe_cursor_t* cursor, size_t* length )
         *length = *((uint32_t*)cursor->ptr);
         cursor->ptr += sizeof(uint32_t);
         cursor->len -= len;
-        return len + yabe_skip_none_value( cursor );
+        return len;
     }
     else if( tag == yabe_str64_tag )
     {
@@ -389,7 +386,7 @@ size_t yabe_read_string( yabe_cursor_t* cursor, size_t* length )
         *length = *((uint64_t*)cursor->ptr);
         cursor->ptr += sizeof(uint64_t);
         cursor->len -= len;
-        return len + yabe_skip_none_value( cursor );
+        return len;
     }
     return 0;
 }
