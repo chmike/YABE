@@ -600,7 +600,7 @@ static inline uint8_t yabe_peek_tag( const yabe_cursor_t* cursor )
  *                       is updated to point on the next byte in the buffer
  * \return 1 as the number of bytes "read"
  */
-static inline void yabe_skip_tag( yabe_cursor_t* cursor )
+static inline size_t yabe_skip_tag( yabe_cursor_t* cursor )
 {
     assert( cursor && cursor->ptr && cursor->len );
     cursor->ptr += sizeof(int8_t);
