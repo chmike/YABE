@@ -1,9 +1,9 @@
 # YABE 
 
-YABE is **Y**et **A**nother **B**inary **E**ncoding proposal as simple as JSON, but with the addition of a binary blob data value (i.e. Images) and the benefit of marshalling binary data.
+YABE is the acronym of **Y**et **A**nother **B**inary **E**ncoding. It provides a binary encoding for JSON, extended to accept blob data values (e.g. for images). The data encoding is very simple, compact and easy to handle.
 
 **Author**: Christophe Meessen  
-**Date** : 25 sep 2012  
+**Date** : 3 oct 2012  
 
 ### Value types
 
@@ -30,7 +30,7 @@ Each value is encoded as a tag byte identifying its type, followed by an optiona
     | Value  |    Tag    | arguments        | comment
     ---------------------------------------------------------------------
       0..127 : [0xxxxxxx]                   : integer value 0..127 
-      str6   : [10xxxxxx] [byte]*           : utf8 char string 
+      str6   : [10xxxxxx] [byte]*           : utf8 char string [0..63]
       null   : [11000000]                   : null value 
       int16  : [11000001] [int16]           : 16 bit integer
       int32  : [11000010] [int32]           : 32 bit integer
@@ -47,24 +47,25 @@ Each value is encoded as a tag byte identifying its type, followed by an optiona
       str16  : [11001101] [len16] [byte]*   : utf8 char string
       str32  : [11001110] [len32] [byte]*   : utf8 char string
       str64  : [11001111] [len64] [byte]*   : utf8 char string
-      arrayn : [11010xxx] [value]*          : 0 to 6 value array
-      array  : [11010111] [value]*          : equivalent to [
-      objectn: [11011xxx] [string, value]*  : 0 to 6 value object
-      object : [11011111] [string, value]*  : equivalent to {
+      sarray : [11010xxx] [value]*          : 0 to 6 value array
+      arrays : [11010111] [value]*          : equivalent to [
+      sobject: [11011xxx] [string, value]*  : 0 to 6 value object
+      objects: [11011111] [string, value]*  : equivalent to {
       -1..-32: [111xxxxx]                   : integer value -1..-32
 
 * The tag is a one byte value ;
-* Integer values from -32 to 127 are encoded as is as the tag value ;
+* Integer values from -32 to 127 are encoded in a single byte as the tag itself ;
 * Integer values are encoded as little endian signed integer ; 
 * Floating point values are little endian encoded in the IEEE 754-2008 format ;
 * A strings is a sequence of utf8 encoded chars with the number of bytes as length ;
 * A length value are encoded as little endian unsigned integer of 16, 32 or 64 bits ;
+* Strings shorter than 64 bytes have their length encoded in the tag byte ;
 * A blob is a pair of strings, the first contains the mime type of the raw data bytes encoded in the second string ;
 * An Array is encoded as a stream of values ;
-* An Object is encoded as a stream of string and value pairs where the string is a unique identifier ;
+* An Object is encoded as a stream of string and value pairs where the string is a unique identifier in the object ;
 * An Object may not have an empty string as identifier ;
-* An array or an object stream is ended by the *ends* tag ;
-* If an array or an object have lest than 7 items, the *arrayn* or *objectn* encoding should be used where the number of items is encoded in the tag ;
+* An array stream (*arrays*) or an object stream (*objects*) must be ended by the end stream (*ends*) tag ;
+* If an array or an object have lest than 7 items, the short array (*sarray*) or short object (*sobject*) encoding should be used where the number of items is encoded in the tag and no *ends* tag is required ;
 
 ### YABE data Signature
 

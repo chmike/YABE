@@ -28,7 +28,7 @@
    encodings with similar proporties around. YABE distinguishes itself from
    them by its encoding and its API.
 
-   \remarks This code taged YABE_v0_r0 is version 0 release 0 of the C
+   \remarks This code taged v0.0 is version 0 release 0 of the C
             source code.
 
    \section data_sec Data type set
@@ -72,7 +72,7 @@
     | Value  |    Tag    | arguments        | comment
     ---------------------------------------------------------------------
       0..127 : [0xxxxxxx]                   : integer value 0..127
-      str6   : [10xxxxxx] [byte]*           : utf8 char string
+      str6   : [10xxxxxx] [byte]*           : utf8 char string [0..63]
       null   : [11000000]                   : null value
       int16  : [11000001] [int16]           : 16 bit integer
       int32  : [11000010] [int32]           : 32 bit integer
@@ -98,7 +98,8 @@
 
     <ul>
     <li> The tag is a one byte value ;
-    <li> Integer values from -32 to 127 are encoded as is as the tag value ;
+    <li> Integer values from -32 to 127 are encoded in a single byte as the
+         tag itself ;
     <li> Integer values are encoded as little endian signed integer ;
     <li> Floating point values are encoded in the IEEE 754-2008 format
          (half, float, double) ;
@@ -106,6 +107,8 @@
          as length ;
     <li> A length value is encoded as little endian unsigned integer of 16, 32
          or 64 bits ;
+    <li> Strings shorter than 64 bytes have their length encoded in the tag
+         byte ;
     <li> A blob is a pair of strings, the first is a mime type and the second
          is a sequence of raw bytes ;
     <li> An Array is encoded as a stream of values ;
@@ -116,6 +119,12 @@
     <li> If an array or an object have less than 7 items, the \e sarray or
          \e sobject encoding should be used where the number of items is
          encoded in the tag and there is no \e ends tag ;
+    <li> An array stream (*arrays*) or an object stream (*objects*) must be
+         ended by the end stream (*ends*) tag ;
+    <li> If an array or an object have lest than 7 items, the short array
+         (*sarray*) or short object (*sobject*) encoding should be used where
+         the number of items is encoded in the tag and no *ends* tag is
+         required ;
     </ul>
 
    \subsection signature YABE encoded block signature
