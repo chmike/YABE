@@ -396,12 +396,25 @@ def dump(obj, f, protocol=0):
 
      
 def dumps(obj, protocol=0) -> bytes:
+    '''
+    Serializes an object and returns a sequence of bytes.
+    Parameters:
+     - obj:      The object to serialize.
+     - protocol: Reserved for future use. This parameter should be 0.
+    '''
     with io.BytesIO() as f:
         dump(obj, f, protocol)
         return f.getvalue()    
 
 
 def load(f) -> object:
+    '''
+    Deserializes an object from a file-like source.
+    Parameters:
+     - f : a file-like object that provides a read(n) method.
+
+    Returns the deserialized object.
+    '''
     signature = f.read(5)
     if len(signature) < 5 or signature[:4] != b'YABE':
         raise ValueError('Not a YABE stream (incorrect signature)')
@@ -412,6 +425,13 @@ def load(f) -> object:
 
 
 def loads(b) -> object:
+    '''
+    Deserializes an object from a bytes source.
+    Parameters:
+     - b: a Bytes object containing YABE encoded data.
+
+    Returns the deserialized object.
+    '''
     with io.BytesIO(b) as f:
         return load(f)
 
