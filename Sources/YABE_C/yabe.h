@@ -893,7 +893,7 @@ static inline size_t yabe_read_end_stream( yabe_cursor_t* cursor )
  */
 static inline size_t yabe_read_signature( yabe_cursor_t* cursor )
 {
-    if( cursor->len < 5 || !memcmp( cursor->ptr, "YABE", 4 ) )
+    if( cursor->len < 5 || memcmp( cursor->ptr, "YABE", 4 ) )
         return 0;
     if( cursor->ptr[4] != 0 )
     {
