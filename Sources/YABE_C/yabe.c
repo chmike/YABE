@@ -31,7 +31,7 @@ size_t yabe_write_integer( yabe_cursor_t* cursor, int64_t val )
     if( val >= -32 && val <= 127 )
     {
         if( cursor->len == 0 )
-            return 1;
+            return 0;
         yabe_poke_int8( cursor, (int8_t)val);
         cursor->len -= sizeof(int8_t);
         return sizeof(int8_t);
